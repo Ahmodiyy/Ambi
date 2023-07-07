@@ -16,15 +16,6 @@ final _router = GoRouter(
       path: '/',
       builder: (context, state) => const HomeScreen(),
     ),
-    GoRoute(
-        path: '/crypto',
-        builder: (context, state) => const AmbientScreen(),
-        routes: [
-          GoRoute(
-            path: 'chart',
-            builder: (context, state) => const ReportScreen(),
-          ),
-        ]),
   ],
 );
 
@@ -37,6 +28,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       routerConfig: _router,
       theme: ThemeData(
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.black12,
+        ),
         elevatedButtonTheme: const ElevatedButtonThemeData(
           style: ButtonStyle(
             shape: MaterialStatePropertyAll(
@@ -48,7 +42,7 @@ class MyApp extends StatelessWidget {
               ),
             ),
             padding: MaterialStatePropertyAll(
-              EdgeInsets.all(15),
+              EdgeInsets.symmetric(vertical: 20, horizontal: 40),
             ),
             backgroundColor: MaterialStatePropertyAll(Colors.black),
           ),

@@ -1,15 +1,31 @@
-import 'package:flutter/gestures.dart';
+import 'dart:async';
+
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+import '../../../constant.dart';
+import 'log_controller.dart';
+
+final currentTimeProvider = StreamProvider.autoDispose<String>((ref) {
+  return Stream.periodic(Duration(seconds: 1), (_) {
+    final now = DateTime.now();
+    final formattedTime =
+        DateFormat.Hms().format(now); // Format without milliseconds
+    return formattedTime;
+  });
+});
+
+class LogScreen extends ConsumerStatefulWidget {
+  const LogScreen({super.key});
 
   @override
-  ConsumerState createState() => _LoginScreenState();
+  ConsumerState createState() => _LogScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LogScreenState extends ConsumerState<LogScreen> {
   bool showSpinner = true;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late TextEditingController _email;
@@ -31,8 +47,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentTimeAsyncValue = ref.watch(currentTimeProvider);
     ref.listen<AsyncValue<void>>(
-      loginControllerProvider,
+      logControllerProvider,
       (_, state) => state.whenOrNull(
         error: (error, stackTrace) {
           // show snackbar if an error occurred
@@ -42,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         },
       ),
     );
-    final loginValue = ref.watch(loginControllerProvider);
+    final loginValue = ref.watch(logControllerProvider);
     final isLoading = loginValue is AsyncLoading<void>;
     return SafeArea(
       child: Scaffold(
@@ -52,72 +69,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  constantLargerWhiteHorizontalSpacing,
-                  HeaderText(
-                    headerTextString: 'Welcome\nback!',
+                  const SizedBox(
+                    height: 60,
                   ),
-                  constantLargerWhiteHorizontalSpacing,
+                  currentTimeAsyncValue.when(data: (data) {
+                    return AutoSizeText(data.toString(),
+                        maxLines: 1,
+                        style: Theme.of(context).textTheme.displayLarge);
+                  }, error: (obj, stack) {
+                    return Text("Unable to get current date time");
+                  }, loading: () {
+                    return const Center(
+                        child: CircularProgressIndicator(
+                      color: Colors.black,
+                    ));
+                  }),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  AutoSizeText(
+                    "Please enter your valid details",
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(
+                    height: 60,
+                  ),
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     decoration: constantTextFieldDecoration.copyWith(
-                      hintText: 'Email Address',
-                      prefixIcon: const Highkon(
-                        icondata: FontAwesomeIcons.user,
-                      ),
+                      hintText: 'Name',
+                      prefixIcon:
+                          const Icon(Icons.person, color: Colors.black45),
                     ),
                     validator: (value) {
-                      return validateEmail(value);
+                      if (value == null || value.isEmpty) {
+                        return 'Oops! You forgot to enter your name. Please enter your name';
+                      }
+                      return null;
                     },
                   ),
-                  constantSmallerHorizontalSpacing,
+                  const SizedBox(
+                    height: 30,
+                  ),
                   TextFormField(
                     controller: _password,
-                    obscureText: _obscureText,
                     keyboardType: TextInputType.text,
                     decoration: constantTextFieldDecoration.copyWith(
-                      hintText: 'Password',
-                      prefixIcon: const Highkon(
-                        icondata: FontAwesomeIcons.lock,
-                      ),
-                      suffixIcon: InkWell(
-                        onTap: _toggle,
-                        child: Icon(
-                          _obscureText
-                              ? FontAwesomeIcons.eye
-                              : FontAwesomeIcons.eyeSlash,
-                          size: 15.0,
-                        ),
-                      ),
+                      hintText: 'Site',
+                      prefixIcon: const Icon(Icons.location_city,
+                          color: Colors.black45),
                     ),
                     validator: (value) {
-                      return validatePassword(value);
-                    },
-                  ),
-                  constantLargerWhiteHorizontalSpacing,
-                  ActionButton(
-                    action: () async {
-                      if (_formKey.currentState!.validate()) {
-                        ref
-                            .read(loginControllerProvider.notifier)
-                            .login(_email.text.trim(), _password.text.trim())
-                            .then((value) => value?.user != null
-                                ? Navigator.pushNamed(context, Report.id)
-                                : null);
+                      if (value == null || value.isEmpty) {
+                        return 'Site not specified. Please enter the site you want to work on!';
                       }
+                      return null;
                     },
-                    actionString: 'Sign in',
-                    isLoading: isLoading,
                   ),
-                  constantSmallerHorizontalSpacing,
-                  RichTexts(
-                    suggestion: 'Don\'t have an account? ',
-                    suggestionAction: 'Sign up',
-                    suggestionActionRoute: Register.id,
-                    tapGestureRecognizer: _tapGestureRecognizerSignIn,
+                  const SizedBox(
+                    height: 60,
                   ),
+                  ElevatedButton(onPressed: () {}, child: const Text("Sign in"))
                 ],
               ),
             ),
