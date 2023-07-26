@@ -107,7 +107,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Oops! You forgot to enter your name. Please enter your name';
+                        return 'Oops! You forgot to enter your name.';
                       }
                       return null;
                     },
@@ -125,7 +125,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Site not specified. Please enter the site you want to work on!';
+                        return 'Site not specified!';
                       }
                       return null;
                     },
@@ -133,7 +133,11 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                   const SizedBox(
                     height: 60,
                   ),
-                  ElevatedButton(onPressed: () {}, child: const Text("Sign in"))
+                  ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {}
+                      },
+                      child: const Text("Sign in"))
                 ],
               ),
             ),
