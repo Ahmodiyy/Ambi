@@ -3,19 +3,24 @@ import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
 
 import '../../../constant.dart';
 import 'log_controller.dart';
 
 final currentTimeProvider = StreamProvider.autoDispose<String>((ref) {
-  return Stream.periodic(Duration(seconds: 1), (_) {
+  return Stream.periodic(const Duration(seconds: 1), (_) {
     final now = DateTime.now();
     final formattedTime =
         DateFormat.Hms().format(now); // Format without milliseconds
     return formattedTime;
   });
+});
+
+final logControllerProvider =
+    AsyncNotifierProvider.autoDispose<LogController, void>(() {
+  return LogController();
 });
 
 class LogScreen extends ConsumerStatefulWidget {
@@ -28,39 +33,43 @@ class LogScreen extends ConsumerStatefulWidget {
 class _LogScreenState extends ConsumerState<LogScreen> {
   bool showSpinner = true;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late TextEditingController _email;
-  late TextEditingController _password;
-
+  late TextEditingController _name;
+  late TextEditingController _site;
+  late ConnectivityResult connectivityResult;
   @override
   void initState() {
     super.initState();
-    _email = TextEditingController();
-    _password = TextEditingController();
+    _name = TextEditingController();
+    _site = TextEditingController();
   }
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _name.dispose();
+    _site.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final currentTimeAsyncValue = ref.watch(currentTimeProvider);
-    ref.listen<AsyncValue<void>>(
-      logControllerProvider,
-      (_, state) => state.whenOrNull(
-        error: (error, stackTrace) {
-          // show snackbar if an error occurred
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          );
-        },
-      ),
-    );
     final loginValue = ref.watch(logControllerProvider);
-    final isLoading = loginValue is AsyncLoading<void>;
+    bool isLoading = loginValue is AsyncLoading<void>;
+    ref.listen(logControllerProvider, (previous, next) {
+      next.when(
+          data: (value) => {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Successful")),
+                ),
+              },
+          error: (error, stackTrace) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error.toString())),
+            );
+          },
+          loading: () {});
+    });
+
     return SafeArea(
       child: Scaffold(
         body: SingleChildScrollView(
@@ -79,7 +88,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                         maxLines: 1,
                         style: Theme.of(context).textTheme.displayLarge);
                   }, error: (obj, stack) {
-                    return Text("Unable to get current date time");
+                    return const Text("Unable to get current date time");
                   }, loading: () {
                     return const Center(
                         child: CircularProgressIndicator(
@@ -98,7 +107,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                     height: 60,
                   ),
                   TextFormField(
-                    controller: _email,
+                    controller: _name,
                     keyboardType: TextInputType.emailAddress,
                     decoration: constantTextFieldDecoration.copyWith(
                       hintText: 'Name',
@@ -116,7 +125,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                     height: 30,
                   ),
                   TextFormField(
-                    controller: _password,
+                    controller: _site,
                     keyboardType: TextInputType.text,
                     decoration: constantTextFieldDecoration.copyWith(
                       hintText: 'Site',
@@ -135,9 +144,30 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                   ),
                   ElevatedButton(
                       onPressed: () async {
-                        if (_formKey.currentState!.validate()) {}
+                        if (_formKey.currentState!.validate()) {
+                          var connectivityResult =
+                              await Connectivity().checkConnectivity();
+                          if (connectivityResult == ConnectivityResult.none) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("No internet connection")),
+                            );
+                            return;
+                          }
+                          await ref
+                              .read(logControllerProvider.notifier)
+                              .log(_name.text, _site.text);
+                          _name.clear();
+                          _site.clear();
+                        }
                       },
-                      child: const Text("Sign in"))
+                      child: isLoading
+                          ? const RepaintBoundary(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text("Sign in"))
                 ],
               ),
             ),

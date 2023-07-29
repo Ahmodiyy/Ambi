@@ -6,6 +6,11 @@ class AmbientScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold();
+    return SafeArea(
+        child: Scaffold(
+      body: Column(
+        children: [],
+      ),
+    ));
   }
 }
