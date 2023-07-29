@@ -88,7 +88,8 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                         maxLines: 1,
                         style: Theme.of(context).textTheme.displayLarge);
                   }, error: (obj, stack) {
-                    return const Text("Unable to get current date time");
+                    return const AutoSizeText(
+                        "Unable to get current date time");
                   }, loading: () {
                     return const Center(
                         child: CircularProgressIndicator(
