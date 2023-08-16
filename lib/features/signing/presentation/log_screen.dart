@@ -57,11 +57,13 @@ class _LogScreenState extends ConsumerState<LogScreen> {
     bool isLoading = loginValue is AsyncLoading<void>;
     ref.listen(logControllerProvider, (previous, next) {
       next.when(
-          data: (value) => {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Successful")),
-                ),
-              },
+          data: (value) {
+            _name.clear();
+            _site.clear();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Successful")),
+            );
+          },
           error: (error, stackTrace) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(error.toString())),
@@ -155,11 +157,14 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                             );
                             return;
                           }
-                          await ref
-                              .read(logControllerProvider.notifier)
-                              .log(_name.text, _site.text);
-                          _name.clear();
-                          _site.clear();
+
+                          try {
+                            await ref
+                                .read(logControllerProvider.notifier)
+                                .log(_name.text, _site.text);
+                          } catch (e) {
+                            debugPrint(e.toString());
+                          }
                         }
                       },
                       child: isLoading

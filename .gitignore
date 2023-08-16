@@ -47,3 +47,4 @@ app.*.map.json
 *.json
 *.plist
 firebase_options.dart
+secret.dart

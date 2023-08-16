@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:ambi/features/signing/data/log_repo.dart';
-import 'package:ambi/features/signing/data/log_repo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LogController extends AutoDisposeAsyncNotifier<void> {
